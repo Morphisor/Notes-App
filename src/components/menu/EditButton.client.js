@@ -1,12 +1,12 @@
 import {unstable_useTransition} from 'react';
-import { useLocation } from "../../LocationContext.client";
+import {useLocation} from '../../LocationContext.client';
 
 export default function EditButton({noteId, children}) {
-    const [, setLocation] = useLocation();
-    const [startTransition, isPending] = unstable_useTransition();
-    const isDraft = noteId = null;
+  const [, setLocation] = useLocation();
+  const [startTransition, isPending] = unstable_useTransition();
+  const isDraft = noteId == null;
 
-    return (
+  return (
     <button
       className={[
         'edit-button',
@@ -24,6 +24,7 @@ export default function EditButton({noteId, children}) {
       }}
       role="menuitem">
       {children}
-    </button>        
-    );
+    </button>
+  );
 }
+

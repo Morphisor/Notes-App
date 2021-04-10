@@ -13,11 +13,11 @@ babelRegister({
 
 const express = require('express');
 const compress = require('compression');
-const { pipeToNodeWritable } = require('react-server-dom-webpack/writer');
+const {pipeToNodeWritable} = require('react-server-dom-webpack/writer');
 const path = require('path');
 const React = require('react');
 const ReactApp = require('../src/App.server').default;
-const { readFileSync, writeFile } = require('fs');
+const {readFileSync, writeFile} = require('fs');
 
 const PORT = 4000;
 const app = express();
@@ -37,7 +37,7 @@ app.get(
       path.resolve(__dirname, '../build/index.html'),
       'utf-8'
     );
-    
+
     // Note: this is sending an empty HTML shell, like a client-side-only app.
     // However, the intended solution (which isn't built out yet) is to read
     // from the Server endpoint and turn its response into an HTML stream.
@@ -57,9 +57,9 @@ app.get(
       created_at: new Date(),
       updated_at: new Date(),
       title: 'test',
-      body: 'test body'
+      body: 'test body',
     };
-    const {rows} = { rows: [row] };
+    const {rows} = {rows: [row]};
     res.json(rows);
   })
 );
@@ -68,13 +68,17 @@ app.post(
   '/notes',
   handleErrors(async function(req, res) {
     const now = new Date();
-    const result = { rows: [{
-      id: 99,
-      created_at: now,
-      updated_at: now,
-      title: 'Test post',
-      body: 'test body'
-    }] };
+    const result = {
+      rows: [
+        {
+          id: 99,
+          created_at: now,
+          updated_at: now,
+          title: 'Test post',
+          body: 'test body',
+        },
+      ],
+    };
     const insertedId = result.rows[0].id;
     sendResponse(req, res, insertedId);
   })
@@ -98,17 +102,21 @@ app.get(
   '/notes/:id',
   handleErrors(async function(req, res) {
     const now = new Date();
-    const result = { rows: [{
-      id: 99,
-      created_at: now,
-      updated_at: now,
-      title: 'Test post',
-      body: 'test body'
-    }] };
+    const result = {
+      rows: [
+        {
+          id: 99,
+          created_at: now,
+          updated_at: now,
+          title: 'Test post',
+          body: 'test body',
+        },
+      ],
+    };
     console.log('notes', req.params.id);
     res.json(result.rows[0]);
   })
-)
+);
 
 app.use(express.static('build'));
 app.use(express.static('public'));
@@ -122,10 +130,9 @@ app.on('error', function(error) {
     case 'EACCES':
       console.error(bind + ' requires elevated privileges');
       process.exit(1);
-      break;
     case 'EADDRINUSE':
       console.error(bind + ' is already in use');
-      break;
+      process.exit(1);
     default:
       throw error;
   }
@@ -138,7 +145,7 @@ function handleErrors(fn) {
     } catch (x) {
       next(x);
     }
-  }
+  };
 }
 
 async function waitForWebpack() {
@@ -174,6 +181,7 @@ function sendResponse(req, res, redirectToId) {
   renderReactTree(res, {
     selectedId: location.selectedId,
     isEditing: location.isEditing,
-    searchText: location.searchText
+    searchText: location.searchText,
   });
 }
+
