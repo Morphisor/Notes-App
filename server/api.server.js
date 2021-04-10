@@ -162,7 +162,7 @@ function sendResponse(req, res, redirectToId) {
   renderReactTree(res, {
     selectedId: location.selectedId,
     isEditing: location.isEditing,
-    searchText: location.searchText ?? null,
+    searchText: location.searchText,
   });
 }
 
