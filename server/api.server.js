@@ -17,7 +17,9 @@ const {pipeToNodeWritable} = require('react-server-dom-webpack/writer');
 const path = require('path');
 const React = require('react');
 const ReactApp = require('../src/App.server').default;
-const {readFileSync, writeFile} = require('fs');
+const {readFileSync} = require('fs');
+
+const NotesDataAccess = require('./db.server');
 
 const PORT = 4000;
 const app = express();
@@ -52,34 +54,17 @@ app.get('/react', function(req, res) {
 app.get(
   '/notes',
   handleErrors(async function(_req, res) {
-    const row = {
-      id: 99,
-      created_at: new Date(),
-      updated_at: new Date(),
-      title: 'test',
-      body: 'test body',
-    };
-    const {rows} = {rows: [row]};
-    res.json(rows);
+    const notesDA = new NotesDataAccess();
+    const notes = await notesDA.getNotes(_req.query.searchtext);
+    res.json(notes);
   })
 );
 
 app.post(
   '/notes',
   handleErrors(async function(req, res) {
-    const now = new Date();
-    const result = {
-      rows: [
-        {
-          id: 99,
-          created_at: now,
-          updated_at: now,
-          title: 'Test post',
-          body: 'test body',
-        },
-      ],
-    };
-    const insertedId = result.rows[0].id;
+    const notesDA = new NotesDataAccess();
+    const insertedId = await notesDA.insertNote(req.body.body, req.body.title);
     sendResponse(req, res, insertedId);
   })
 );
@@ -87,6 +72,9 @@ app.post(
 app.put(
   '/notes/:id',
   handleErrors(async function(req, res) {
+    const id = req.params.id;
+    const notesDA = new NotesDataAccess();
+    await notesDA.updateNote(id, req.body.body, req.body.title);
     sendResponse(req, res, null);
   })
 );
@@ -94,6 +82,9 @@ app.put(
 app.delete(
   '/notes/:id',
   handleErrors(async function(req, res) {
+    const id = req.params.id;
+    const notesDA = new NotesDataAccess();
+    await notesDA.deleteNote(id);
     sendResponse(req, res, null);
   })
 );
@@ -101,20 +92,10 @@ app.delete(
 app.get(
   '/notes/:id',
   handleErrors(async function(req, res) {
-    const now = new Date();
-    const result = {
-      rows: [
-        {
-          id: 99,
-          created_at: now,
-          updated_at: now,
-          title: 'Test post',
-          body: 'test body',
-        },
-      ],
-    };
-    console.log('notes', req.params.id);
-    res.json(result.rows[0]);
+    const id = req.params.id;
+    const notesDA = new NotesDataAccess();
+    const result = await notesDA.getNoteById(id);
+    res.json(result);
   })
 );
 
@@ -181,7 +162,7 @@ function sendResponse(req, res, redirectToId) {
   renderReactTree(res, {
     selectedId: location.selectedId,
     isEditing: location.isEditing,
-    searchText: location.searchText,
+    searchText: location.searchText ?? null,
   });
 }
 

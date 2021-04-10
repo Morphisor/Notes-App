@@ -6,34 +6,34 @@ import NoteEditor from './NoteEditor.client';
 import NotePreview from './NotePreview';
 
 export default function Note({selectedId, isEditing}) {
-    const note =
-        selectedId != null
-        ? fetch(`http://localhost:4000/notes/${selectedId}`).json()
-        : null;
+  const note =
+    selectedId != null
+      ? fetch(`http://localhost:4000/notes/${selectedId}`).json()
+      : null;
 
-    if (note === null) {
-        if (isEditing) {
-            return (
-                <NoteEditor noteId={null} initialTitle="Untitled" initialBody="" />
-            );
-        } else {
-            return (
-                <div className="note--empty-state">
-                    <span className="note-text--empty-state">
-                        Click a note on the left to view something! 🥺
-                    </span>
-                </div>                
-            );
-        }
-    }
-
-    let {id, title, body, updated_at} = note;
-    const updatedAt = new Date(updated_at);
-
+  if (note === null) {
     if (isEditing) {
-        return <NoteEditor noteId={id} initialTitle={title} initialBody={body} />;
+      return (
+        <NoteEditor noteId={null} initialTitle="Untitled" initialBody="" />
+      );
     } else {
-        return (
+      return (
+        <div className="note--empty-state">
+          <span className="note-text--empty-state">
+            Click a note on the left to view something! 🥺
+          </span>
+        </div>
+      );
+    }
+  }
+
+  let {id, title, body, updated_at} = note;
+  const updatedAt = new Date(updated_at);
+
+  if (isEditing) {
+    return <NoteEditor noteId={id} initialTitle={title} initialBody={body} />;
+  } else {
+    return (
       <div className="note">
         <div className="note-header">
           <h1 className="note-title">{title}</h1>
@@ -45,7 +45,8 @@ export default function Note({selectedId, isEditing}) {
           </div>
         </div>
         <NotePreview body={body} />
-      </div>            
-        );
-    }
+      </div>
+    );
+  }
 }
+
