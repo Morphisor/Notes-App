@@ -1,6 +1,6 @@
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
-const uri = '';
+const uri = 'mongodb+srv://admin:Z478BQWogbmd@notesappcluster.sb2tr.mongodb.net/myFirstDatabase?retryWrites=true&w=majority';
 
 class NotesDataAccess {
   client = null;

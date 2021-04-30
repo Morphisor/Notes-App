@@ -7,33 +7,76 @@ const babelRegister = require('@babel/register');
 
 babelRegister({
   ignore: [/[\\\/](build|server|node_modules)[\\\/]/],
-  presets: [['react-app', {runtime: 'automatic'}]],
+  presets: [['react-app', { runtime: 'automatic' }]],
   plugins: ['@babel/transform-modules-commonjs'],
 });
 
 const express = require('express');
+const expressSession = require('express-session');
 const compress = require('compression');
-const {pipeToNodeWritable} = require('react-server-dom-webpack/writer');
+const { pipeToNodeWritable } = require('react-server-dom-webpack/writer');
 const path = require('path');
 const React = require('react');
 const ReactApp = require('../src/App.server').default;
-const {readFileSync} = require('fs');
+const { readFileSync } = require('fs');
+
+const passport = require('passport');
+const Auth0Strategy = require('passport-auth0');
+
+require('dotenv').config();
+
+const authRouter = require('./auth.server');
 
 const NotesDataAccess = require('./db.server');
 
 const PORT = 4000;
 const app = express();
 
+const session = {
+  secret: process.env.SESSION_SECRET,
+  cookie: {},
+  resave: false,
+  saveUninitialized: false
+};
+
+const strategy = new Auth0Strategy({
+  domain: process.env.AUTH0_DOMAIN,
+  clientID: process.env.AUTH0_CLIENT_ID,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  callbackURL: process.env.AUTH0_CALLBACK_URL
+},
+  function (accessToken, refreshToken, extraParams, profile, done) {
+    return done(null, profile);
+  });
+
+
 app.use(compress());
 app.use(express.json());
+app.use(expressSession(session));
+
+passport.use(strategy);
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
+app.use('/', authRouter);
 
 app.listen(PORT, () => {
   console.log('Notes App backend listening at 4000...');
 });
 
+
 app.get(
   '/',
-  handleErrors(async function(_req, res) {
+  secured,
+  handleErrors(async function (_req, res) {
     await waitForWebpack();
     const html = readFileSync(
       path.resolve(__dirname, '../build/index.html'),
@@ -47,13 +90,14 @@ app.get(
   })
 );
 
-app.get('/react', function(req, res) {
+app.get('/react', secured, function (req, res) {
   sendResponse(req, res, null);
 });
 
 app.get(
   '/notes',
-  handleErrors(async function(_req, res) {
+  onlyLocal,
+  handleErrors(async function (_req, res) {
     const notesDA = new NotesDataAccess();
     const notes = await notesDA.getNotes(_req.query.searchtext);
     res.json(notes);
@@ -62,7 +106,8 @@ app.get(
 
 app.post(
   '/notes',
-  handleErrors(async function(req, res) {
+  secured,
+  handleErrors(async function (req, res) {
     const notesDA = new NotesDataAccess();
     const insertedId = await notesDA.insertNote(req.body.body, req.body.title);
     sendResponse(req, res, insertedId);
@@ -71,7 +116,8 @@ app.post(
 
 app.put(
   '/notes/:id',
-  handleErrors(async function(req, res) {
+  secured,
+  handleErrors(async function (req, res) {
     const id = req.params.id;
     const notesDA = new NotesDataAccess();
     await notesDA.updateNote(id, req.body.body, req.body.title);
@@ -81,7 +127,8 @@ app.put(
 
 app.delete(
   '/notes/:id',
-  handleErrors(async function(req, res) {
+  secured,
+  handleErrors(async function (req, res) {
     const id = req.params.id;
     const notesDA = new NotesDataAccess();
     await notesDA.deleteNote(id);
@@ -91,7 +138,8 @@ app.delete(
 
 app.get(
   '/notes/:id',
-  handleErrors(async function(req, res) {
+  onlyLocal,
+  handleErrors(async function (req, res) {
     const id = req.params.id;
     const notesDA = new NotesDataAccess();
     const result = await notesDA.getNoteById(id);
@@ -102,7 +150,7 @@ app.get(
 app.use(express.static('build'));
 app.use(express.static('public'));
 
-app.on('error', function(error) {
+app.on('error', function (error) {
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -119,14 +167,33 @@ app.on('error', function(error) {
   }
 });
 
+function secured(req, res, next) {
+  if (req.user) {
+    return next();
+  }
+  res.redirect("/login");
+};
+
 function handleErrors(fn) {
-  return async function(req, res, next) {
+  return async function (req, res, next) {
     try {
       return await fn(req, res);
     } catch (x) {
       next(x);
     }
   };
+}
+
+function onlyLocal(req, res, next) {
+  const ip = req.connection.remoteAddress;
+  const host = req.get('host');
+
+  const localAddress = ip === "127.0.0.1" || ip === "::ffff:127.0.0.1" || ip === "::1" || host.indexOf("localhost") !== -1;
+  if (localAddress) {
+    return next();
+  }
+
+  res.status(403);
 }
 
 async function waitForWebpack() {
