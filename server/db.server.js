@@ -1,6 +1,7 @@
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
-const uri = 'mongodb+srv://admin:Z478BQWogbmd@notesappcluster.sb2tr.mongodb.net/myFirstDatabase?retryWrites=true&w=majority';
+require("dotenv").config();
+const uri = process.env.MONGO_CONNECTION_STRING;
 
 class NotesDataAccess {
   client = null;
