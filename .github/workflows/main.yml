@@ -35,7 +35,7 @@ jobs:
           echo AUTH0_DOMAIN=$AUTH0_DOMAIN >> .env
           echo AUTH0_CLIENT_SECRET=$AUTH0_CLIENT_SECRET >> .env
           echo SESSION_SECRET=$SESSION_SECRET >> .env
-          echo AUTH0_CALLBACK_URL=http://devenv.westeurope.cloudapp.azure.com:4000/callback >> .env
+          echo AUTH0_CALLBACK_URL=http://generalpurpose.westeurope.cloudapp.azure.com:4000/callback >> .env
           echo MONGO_CONNECTION_STRING=$MONGO_CONNECTION_STRING >> .env
         env:
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
